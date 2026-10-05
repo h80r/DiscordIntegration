@@ -45,6 +45,21 @@ public class ChatConfig extends AbstractSubConfig {
 	private static final String SUPPRESS_SERVER_MESSAGES_KEY = "suppress_server_messages";
 	
 	@NotNull
+	private static final String USE_WEBHOOK_KEY = "use_webhook";
+	
+	@NotNull
+	private static final String WEBHOOK_URL_KEY = "webhook_url";
+	
+	@NotNull
+	private static final String WEBHOOK_AVATAR_URL_KEY = "webhook_avatar_url";
+	
+	@NotNull
+	private static final String WEBHOOK_USERNAME_FORMAT_KEY = "webhook_username_format";
+	
+	@NotNull
+	private static final String WEBHOOK_MESSAGE_FORMAT_KEY = "webhook_message_format";
+	
+	@NotNull
 	private static final String CHAT_MESSAGES_CONFIG_KEY = "messages";
 	
 	ChatConfig( @NotNull AbstractMod _abstractMod, @NotNull AbstractSubConfig _parent ) {
@@ -128,6 +143,38 @@ public class ChatConfig extends AbstractSubConfig {
 			SUPPRESS_SERVER_MESSAGES_KEY,
 			false
 		);
+		registerConfigValue(
+			"Should player messages be sent to Discord using a webhook, " +
+				"showing the player's name and skin as avatar?",
+			USE_WEBHOOK_KEY,
+			false
+		);
+		registerConfigValue(
+			"Webhook URL for sending Minecraft player messages to Discord. " +
+				"If use_webhook is true but this is empty, the bot will be used instead.",
+			WEBHOOK_URL_KEY,
+			""
+		);
+		registerConfigValue(
+			"Avatar URL for the webhook. " +
+				"(Available parameters: %uuid% = Player UUID without dashes, " +
+				"%player% = Player name)",
+			WEBHOOK_AVATAR_URL_KEY,
+			"https://render.crafty.gg/3d/head/%player%?width=1024&height=1024"
+		);
+		registerConfigValue(
+			"Username format for the webhook. " +
+				"(Available parameters: %player% = Player name)",
+			WEBHOOK_USERNAME_FORMAT_KEY,
+			"%player%"
+		);
+		registerConfigValue(
+			"Message format for webhook messages. " +
+				"(Available parameters: %player% = Player name, " +
+				"%message% = Message)",
+			WEBHOOK_MESSAGE_FORMAT_KEY,
+			"%message%"
+		);
 		registerSubConfig(
 			"Messages shown on Discord in the chat channel",
 			CHAT_MESSAGES_CONFIG_KEY,
@@ -193,6 +240,35 @@ public class ChatConfig extends AbstractSubConfig {
 	public boolean suppressServerMessages() {
 		
 		return getValue( Boolean.class, SUPPRESS_SERVER_MESSAGES_KEY );
+	}
+	
+	public boolean useWebhook() {
+		
+		return getValue( Boolean.class, USE_WEBHOOK_KEY );
+	}
+	
+	@NotNull
+	public String getWebhookUrl() {
+		
+		return getValue( String.class, WEBHOOK_URL_KEY );
+	}
+	
+	@NotNull
+	public String getWebhookAvatarUrl() {
+		
+		return getValue( String.class, WEBHOOK_AVATAR_URL_KEY );
+	}
+	
+	@NotNull
+	public String getWebhookUsernameFormat() {
+		
+		return getValue( String.class, WEBHOOK_USERNAME_FORMAT_KEY );
+	}
+	
+	@NotNull
+	public String getWebhookMessageFormat() {
+		
+		return getValue( String.class, WEBHOOK_MESSAGE_FORMAT_KEY );
 	}
 	
 	@NotNull

@@ -77,7 +77,15 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 	
 	public void sendEmoteChatMessage( CommandSourceStack source, Component action ) {
 		
-		sendMessage( discordMessageBuilder().buildMeChatMessage( source, action.getString() ) );
+		ServerPlayer player = getPlayer( source );
+		if( player != null && useWebhook() ) {
+			sendWebhookMessage(
+				player,
+				discordMessageBuilder().buildWebhookMeMessage( source, action.getString() )
+			);
+		} else {
+			sendMessage( discordMessageBuilder().buildMeChatMessage( source, action.getString() ) );
+		}
 	}
 	
 	public void sendChatMessage( CommandSourceStack source, Component message ) {
@@ -85,13 +93,43 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 		if( !serverConfig().getChatConfig().suppressServerMessages() ||
 			!"Server".equals( source.getTextName() ) ||
 			source.getEntity() != null ) {
-			sendMessage( discordMessageBuilder().buildChatMessage( source, message ) );
+			ServerPlayer player = getPlayer( source );
+			if( player != null && useWebhook() ) {
+				sendWebhookMessage(
+					player,
+					discordMessageBuilder().buildWebhookChatMessage( source, message.getString() )
+				);
+			} else {
+				sendMessage( discordMessageBuilder().buildChatMessage( source, message ) );
+			}
 		}
 	}
 	
 	public void sendChatMessage( ServerPlayer player, String message ) {
 		
-		sendMessage( discordMessageBuilder().buildChatMessage( player, message ) );
+		if( useWebhook() ) {
+			sendWebhookMessage(
+				player,
+				discordMessageBuilder().buildWebhookChatMessage( player, message )
+			);
+		} else {
+			sendMessage( discordMessageBuilder().buildChatMessage( player, message ) );
+		}
+	}
+	
+	@Nullable
+	private ServerPlayer getPlayer( @NotNull CommandSourceStack source ) {
+		
+		if( source.getEntity() instanceof ServerPlayer player ) {
+			return player;
+		}
+		return null;
+	}
+	
+	private boolean useWebhook() {
+		
+		return serverConfig().getChatConfig().useWebhook() &&
+			!serverConfig().getChatConfig().getWebhookUrl().isBlank();
 	}
 	
 	public void sendMessage( String message ) {
@@ -100,6 +138,25 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 			synchronized( ChatManager.class ) {
 				if( isInitialized() ) {
 					discordMessageSender().sendMessage( channel, message );
+				}
+			}
+		}
+	}
+	
+	private void sendWebhookMessage( @NotNull ServerPlayer player, @NotNull String message ) {
+		
+		synchronized( DiscordManager.class ) {
+			synchronized( ChatManager.class ) {
+				if( shouldInitialize() ) {
+					String playerName = player.getGameProfile().getName();
+					String username = discordMessageBuilder().buildWebhookUsername( playerName );
+					String avatarUrl = discordMessageBuilder().buildWebhookAvatarUrl( player.getUUID(), playerName );
+					discordMessageSender().sendWebhookMessage(
+						serverConfig().getChatConfig().getWebhookUrl(),
+						message,
+						username,
+						avatarUrl
+					);
 				}
 			}
 		}

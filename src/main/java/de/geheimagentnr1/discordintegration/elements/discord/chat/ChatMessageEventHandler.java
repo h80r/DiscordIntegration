@@ -65,7 +65,8 @@ public class ChatMessageEventHandler extends ListenerAdapter {
 		if( server == null ||
 			!serverConfig.isLoaded() ||
 			!chatManager.isCorrectChannel( event.getChannel().getIdLong() ) ||
-			author.getIdLong() == discordManager.getSelfUser().getIdLong() ) {
+			author.getIdLong() == discordManager.getSelfUser().getIdLong() ||
+			event.getMessage().isWebhookMessage() ) {
 			return;
 		}
 		

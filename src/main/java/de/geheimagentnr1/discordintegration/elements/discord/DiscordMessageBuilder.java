@@ -95,6 +95,59 @@ public class DiscordMessageBuilder {
 	}
 	
 	@NotNull
+	public String buildWebhookChatMessage( @NotNull Player player, @NotNull String message ) {
+		
+		return buildWebhookMessage( getEntityName( player ), message );
+	}
+	
+	@NotNull
+	public String buildWebhookChatMessage( @NotNull CommandSourceStack source, @NotNull String message ) {
+		
+		return buildWebhookMessage( getCommandSourceStackName( source ), message );
+	}
+	
+	@NotNull
+	public String buildWebhookMeMessage( @NotNull Player player, @NotNull String message ) {
+		
+		return "*" + buildWebhookMessage( getEntityName( player ), message ) + "*";
+	}
+	
+	@NotNull
+	public String buildWebhookMeMessage( @NotNull CommandSourceStack source, @NotNull String message ) {
+		
+		return "*" + buildWebhookMessage( getCommandSourceStackName( source ), message ) + "*";
+	}
+	
+	@NotNull
+	private String buildWebhookMessage( @NotNull String name, @NotNull String message ) {
+		
+		return MessageUtil.replaceParameters(
+			serverConfig.getChatConfig().getWebhookMessageFormat(),
+			Map.of(
+				"player", name,
+				"message", message
+			)
+		);
+	}
+	
+	@NotNull
+	public String buildWebhookAvatarUrl( @NotNull java.util.UUID uuid, @NotNull String playerName ) {
+		
+		return serverConfig.getChatConfig()
+			.getWebhookAvatarUrl()
+			.replace( "%uuid%", uuid.toString().replace( "-", "" ) )
+			.replace( "%player%", playerName );
+	}
+	
+	@NotNull
+	public String buildWebhookUsername( @NotNull String playerName ) {
+		
+		return serverConfig.getChatConfig()
+			.getWebhookUsernameFormat()
+			.replace( "%player%", playerName );
+	}
+	
+	@NotNull
 	public List<String> buildFeedbackMessage( @NotNull String message ) {
 		
 		List<String> messages = new ArrayList<>();
