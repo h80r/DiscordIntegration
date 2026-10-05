@@ -15,6 +15,9 @@ public class ChatConfig extends AbstractSubConfig {
 	private static final String CHANNEL_ID_KEY = "channel_id";
 	
 	@NotNull
+	private static final String THREAD_ID_KEY = "thread_id";
+	
+	@NotNull
 	private static final String USE_RAW_MESSAGE_FORMAT_DISCORD_TO_MINECRAFT_KEY =
 		"use_raw_message_format_discord_to_minecraft";
 	
@@ -74,6 +77,12 @@ public class ChatConfig extends AbstractSubConfig {
 		registerConfigValue(
 			"Channel ID where the Minecraft and Discord chat will be linked.",
 			CHANNEL_ID_KEY,
+			( builder, path ) -> builder.defineInRange( path, 0, 0, Long.MAX_VALUE )
+		);
+		registerConfigValue(
+			"Thread ID inside the chat channel where messages will be sent and read. " +
+				"Set to 0 to use the parent channel instead of a thread.",
+			THREAD_ID_KEY,
 			( builder, path ) -> builder.defineInRange( path, 0, 0, Long.MAX_VALUE )
 		);
 		registerConfigValue(
@@ -190,6 +199,11 @@ public class ChatConfig extends AbstractSubConfig {
 	public long getChannelId() {
 		
 		return getValue( Long.class, CHANNEL_ID_KEY );
+	}
+	
+	public long getThreadId() {
+		
+		return getValue( Long.class, THREAD_ID_KEY );
 	}
 	
 	public boolean useRawMessageFormatDiscordToMinecraft() {

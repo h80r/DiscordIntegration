@@ -55,7 +55,15 @@ public class ChatMessageEventHandler extends ListenerAdapter {
 	@Override
 	public void onMessageReceived( @NotNull MessageReceivedEvent event ) {
 		
-		if( !event.isFromGuild() || event.getChannelType() != ChannelType.TEXT ) {
+		if( !event.isFromGuild() ) {
+			return;
+		}
+		
+		ChannelType channelType = event.getChannelType();
+		boolean isTextChannel = channelType == ChannelType.TEXT;
+		boolean isThreadChannel = channelType == ChannelType.GUILD_PUBLIC_THREAD ||
+			channelType == ChannelType.GUILD_PRIVATE_THREAD;
+		if( !isTextChannel && !isThreadChannel ) {
 			return;
 		}
 		

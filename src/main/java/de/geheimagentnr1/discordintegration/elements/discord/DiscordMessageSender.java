@@ -1,7 +1,7 @@
 package de.geheimagentnr1.discordintegration.elements.discord;
 
 import lombok.extern.log4j.Log4j2;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,7 @@ public class DiscordMessageSender {
 			.build();
 	}
 	
-	public void sendMessage( @NotNull TextChannel channel, @NotNull String message ) {
+	public void sendMessage( @NotNull GuildMessageChannel channel, @NotNull String message ) {
 		
 		try {
 			for( int start = 0; start < message.length(); start += MAX_DISCORD_MESSAGE_LENGTH ) {
@@ -43,12 +43,14 @@ public class DiscordMessageSender {
 		@NotNull String webhookUrl,
 		@NotNull String message,
 		@Nullable String username,
-		@Nullable String avatarUrl ) {
+		@Nullable String avatarUrl,
+		long threadId ) {
 		
 		try {
+			String targetUrl = threadId > 0 ? webhookUrl + "?thread_id=" + threadId : webhookUrl;
 			for( int start = 0; start < message.length(); start += MAX_DISCORD_MESSAGE_LENGTH ) {
 				String part = message.substring( start, Math.min( message.length(), start + MAX_DISCORD_MESSAGE_LENGTH ) );
-				sendWebhookMessagePart( webhookUrl, part, username, avatarUrl );
+				sendWebhookMessagePart( targetUrl, part, username, avatarUrl );
 			}
 		} catch( Exception exception ) {
 			log.error( "Webhook message could not be send to {}", webhookUrl, exception );

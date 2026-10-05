@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,7 +29,7 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 	private final DiscordIntegration discordIntegration;
 	
 	@Nullable
-	private TextChannel channel;
+	private GuildMessageChannel messageChannel;
 	
 	public void init() {
 		
@@ -36,10 +38,22 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 				stop();
 				if( shouldInitialize() ) {
 					long channelId = serverConfig().getChatConfig().getChannelId();
+					long threadId = serverConfig().getChatConfig().getThreadId();
 					JDA jda = discordManager().getJda();
-					channel = jda.getTextChannelById( channelId );
-					if( channel == null ) {
+					TextChannel textChannel = jda.getTextChannelById( channelId );
+					if( textChannel == null ) {
 						log.error( "Discord Chat Text Channel {} not found", channelId );
+						return;
+					}
+					if( threadId > 0 ) {
+						ThreadChannel threadChannel = jda.getThreadChannelById( threadId );
+						if( threadChannel == null ) {
+							log.error( "Discord Chat Thread {} not found", threadId );
+							return;
+						}
+						messageChannel = threadChannel;
+					} else {
+						messageChannel = textChannel;
 					}
 				}
 			}
@@ -50,7 +64,7 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 		
 		synchronized( DiscordManager.class ) {
 			synchronized( ChatManager.class ) {
-				channel = null;
+				messageChannel = null;
 			}
 		}
 	}
@@ -64,7 +78,7 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 		
 		synchronized( DiscordManager.class ) {
 			synchronized( ChatManager.class ) {
-				return shouldInitialize() && channel != null;
+				return shouldInitialize() && messageChannel != null;
 			}
 		}
 	}
@@ -72,7 +86,15 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 	//package-private
 	boolean isCorrectChannel( long channelId ) {
 		
-		return isInitialized() && serverConfig().getChatConfig().getChannelId() == channelId;
+		if( !isInitialized() ) {
+			return false;
+		}
+		long configuredChannelId = serverConfig().getChatConfig().getChannelId();
+		long configuredThreadId = serverConfig().getChatConfig().getThreadId();
+		if( configuredThreadId > 0 ) {
+			return configuredThreadId == channelId;
+		}
+		return configuredChannelId == channelId;
 	}
 	
 	public void sendEmoteChatMessage( CommandSourceStack source, Component action ) {
@@ -137,7 +159,7 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 		synchronized( DiscordManager.class ) {
 			synchronized( ChatManager.class ) {
 				if( isInitialized() ) {
-					discordMessageSender().sendMessage( channel, message );
+					discordMessageSender().sendMessage( messageChannel, message );
 				}
 			}
 		}
@@ -155,7 +177,8 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 						serverConfig().getChatConfig().getWebhookUrl(),
 						message,
 						username,
-						avatarUrl
+						avatarUrl,
+						serverConfig().getChatConfig().getThreadId()
 					);
 				}
 			}
@@ -169,7 +192,7 @@ public class ChatManager extends AbstractDiscordIntegrationServiceProvider {
 			synchronized( ChatManager.class ) {
 				if( isInitialized() ) {
 					for( String messagePart : discordMessageBuilder().buildFeedbackMessage( message ) ) {
-						discordMessageSender().sendMessage( channel, messagePart );
+						discordMessageSender().sendMessage( messageChannel, messagePart );
 					}
 				}
 			}
